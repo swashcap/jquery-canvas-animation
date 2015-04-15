@@ -7,6 +7,8 @@
      */
     var $window = $(window);
 
+    var NAMESPACE = 'ca';
+
     var setupCanvas = function ($canvas, options) {
         var defaults = {
             /**
@@ -88,7 +90,7 @@
          */
         var context = $canvas.get(0).getContext('2d');
 
-        var $scroller, canvasWidth, canvasHeight, animationTriggerPoint,
+        var canvasWidth, canvasHeight, animationTriggerPoint,
             requestAnimationId, now, then, elapsed;
 
         options = $.extend(defaults, options);
@@ -201,7 +203,7 @@
          * @return {undefined}
          */
         var maybeAnimate = function () {
-            var scrollTop = $scroller.scrollTop();
+            var scrollTop = $window.scrollTop();
             var t;
 
             if (
@@ -211,7 +213,7 @@
             ) {
                 then = Date.now();
                 hasAnimated = true;
-                $scroller.unbind('scroll.automagically');
+                $window.unbind('scroll.' + NAMESPACE);
 
                 /**
                  * Delay animation by 500ms on non-mobile viewports.
@@ -236,31 +238,12 @@
         return function init() {
             var t;
 
-            // Set the `$scroller` depending on the design
-            if ($window.width() <= 1024) {
-                $scroller = $('body > .wrapper');
-            } else {
-                $scroller = $window;
-            }
+            // Set up the dimensions.
+            setCanvasDimensions($canvas);
+            animationTriggerPoint = getAnimationTriggerPoint();
 
-            /**
-             * Set up the dimensions.
-             *
-             * These must be on a timer because the page's content is initially
-             * hidden. A jQuery `fadeIn()` with no time value is used to fade in
-             * the content.
-             *
-             * @{@link  /skin/frontend/pro/ccipair/js/ccair.js}
-             */
-            t = setTimeout(function () {
-                setCanvasDimensions($canvas);
-                animationTriggerPoint = getAnimationTriggerPoint();
-
-                // Retry the initial paint
-                paintImage(images[0]);
-
-                clearTimeout(t);
-            }, 1000);
+            // Retry the initial paint
+            paintImage(images[0]);
 
             // Load the actual images
             for (var i = 0; i < options.images.length; i++) {
@@ -279,7 +262,7 @@
                     paintImage(images[0]);
                 }
             }, 60));
-            $scroller.bind('scroll.automagically', $.throttle(maybeAnimate, 60));
+            $window.bind('scroll.' + NAMESPACE, $.throttle(maybeAnimate, 60));
         };
     };
 
